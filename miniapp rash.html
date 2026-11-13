@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Javoblarini Yuborish</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 15px; margin: 0; color: #333; }
+        h2 { text-align: center; color: #2c3e50; }
+        .section { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .question { margin-bottom: 12px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        .options { display: flex; gap: 10px; flex-wrap: wrap; }
+        .options label { font-weight: normal; background: #eef2f7; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px; }
+        .keyboard { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+        .kb-btn { background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 14px; }
+        .kb-btn:hover { background: #2980b9; }
+        #submit-btn { width: 100%; background: #27ae60; color: white; border: none; padding: 12px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 30px; }
+        #submit-btn:hover { background: #219653; }
+    </style>
+</head>
+<body>
+
+    <h2>Test Javoblari</h2>
+    <div id="test-form"></div>
+    <button id="submit-btn" onclick="submitAnswers()">Javoblarni Yuborish</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const formContainer = document.getElementById('test-form');
+        let activeInput = null;
+
+        // 1-32: ABCD
+        let htmlContent = '<div class="section"><h3>1 - 32: Testlar (A, B, C, D)</h3>';
+        for (let i = 1; i <= 32; i++) {
+            htmlContent += `<div class="question">
+                <label>${i}-savol:</label>
+                <div class="options">
+                    ${['A', 'B', 'C', 'D'].map(opt => `<label><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`).join('')}
+                </div>
+            </div>`;
+        }
+        htmlContent += '</div>';
+
+        // 33-35: ABCDEF
+        htmlContent += '<div class="section"><h3>33 - 35: Testlar (A, B, C, D, E, F)</h3>';
+        for (let i = 33; i <= 35; i++) {
+            htmlContent += `<div class="question">
+                <label>${i}-savol:</label>
+                <div class="options">
+                    ${['A', 'B', 'C', 'D', 'E', 'F'].map(opt => `<label><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`).join('')}
+                </div>
+            </div>`;
+        }
+        htmlContent += '</div>';
+
+        // 36-45: Yozma (a va b qismlar) + Maxsus klaviatura
+        htmlContent += '<div class="section"><h3>36 - 45: Yozma savollar (a va b)</h3>';
+        const symbols = ['α', 'β', 'γ', 'π', '°', '±', '√', 'Δ', '∫', '²', '³', '·', '÷', '≤', '≥', '≠'];
+        
+        for (let i = 36; i <= 45; i++) {
+            ['a', 'b'].forEach(sub => {
+                let qName = `${i}${sub}`;
+                htmlContent += `<div class="question">
+                    <label>${qName}-savol:</label>
+                    <input type="text" id="field_${qName}" name="${qName}" placeholder="Javobni kiriting..." onfocus="activeInput = this">
+                    <div class="keyboard">
+                        ${symbols.map(sym => `<button type="button" class="kb-btn" onclick="insertSymbol('${qName}', '${sym}')">${sym}</button>`).join('')}
+                    </div>
+                </div>`;
+            });
+        }
+        htmlContent += '</div>';
+
+        formContainer.innerHTML = htmlContent;
+
+        function insertSymbol(qName, symbol) {
+            const input = document.getElementById(`field_${qName}`);
+            input.value += symbol;
+            input.focus();
+            activeInput = input;
+        }
+
+        function submitAnswers() {
+            let answers = {};
+            
+            // 1-35 radio yig'ish
+            for (let i = 1; i <= 35; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                answers[`q${i}`] = selected ? selected.value : "";
+            }
+
+            // 36-45 yozma yig'ish
+            for (let i = 36; i <= 45; i++) {
+                ['a', 'b'].forEach(sub => {
+                    let qName = `${i}${sub}`;
+                    const val = document.getElementById(`field_${qName}`).value;
+                    answers[qName] = val;
+                });
+            }
+
+            // Botga yuborish
+            tg.sendData(JSON.stringify(answers));
+            tg.close();
+        }
+    </script>
+</body>
+</html>
